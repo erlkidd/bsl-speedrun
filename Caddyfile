@@ -1,0 +1,28 @@
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# API (OneScript) — через unix-сокет, у контейнера api нет сети
+	handle /api/* {
+		reverse_proxy unix//sock/api.sock
+	}
+
+	# BSL Language Server (websocket)
+	handle /lsp {
+		reverse_proxy bsl-ls:8025
+	}
+
+	# Фронт (SPA)
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+}

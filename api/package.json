@@ -1,0 +1,13 @@
+{
+  "name": "bsl-speedrun-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "fastify": "^5.6.0",
+    "js-yaml": "^4.1.0"
+  }
+}

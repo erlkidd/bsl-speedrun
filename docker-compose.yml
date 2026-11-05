@@ -1,0 +1,61 @@
+# bsl-speedrun.kz — всё приложение одной командой:  docker compose up -d --build
+# Локально: http://localhost   Прод: в .env задать SITE_ADDRESS=bsl-speedrun.kz, www.bsl-speedrun.kz
+
+services:
+  # Caddy: статика фронта + HTTPS (Let's Encrypt) + прокси на api и bsl-ls
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - apisock:/sock
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - bsl-ls
+
+  # API + OneScript. БЕЗ СЕТИ: общается с Caddy только через unix-сокет в общем томе.
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    volumes:
+      - apisock:/sock
+    environment:
+      SOCKET_PATH: /sock/api.sock
+      RUN_TIMEOUT_MS: "5000"
+      MAX_PARALLEL: "2"
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 256
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+  # BSL Language Server: LSP по websocket (линтер, автодополнение, hover, форматирование)
+  bsl-ls:
+    build: ./bsl-ls
+    restart: unless-stopped
+    expose:
+      - "8025"
+    mem_limit: 1g
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  apisock:
+  caddy_data:
+  caddy_config:
