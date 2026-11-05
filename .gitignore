@@ -1,0 +1,13 @@
+# Выкаченные материалы speedrunit.ru — только локально (скрипт оставляем в git)
+speedrunit/*
+!speedrunit/scrape.py
+
+node_modules/
+dist/
+.astro/
+.env
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
