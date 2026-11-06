@@ -18,7 +18,7 @@ function Layout({ children }) {
         <Link to="/" className="logo" aria-label="bsl speedrun — на главную">
           <picture>
             <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
-            <img src="/logo-light.svg" alt="bsl speedrun" width="160" height="32" />
+            <img src="/logo-light.svg" alt="bsl speedrun" width="158" height="36" />
           </picture>
         </Link>
         <nav>
