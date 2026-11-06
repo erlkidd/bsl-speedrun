@@ -2,7 +2,7 @@
 // Диагностики → маркеры Monaco; автодополнение, hover, форматирование.
 
 // Правила BSL LS, которые в тренажёре только мешают (Сообщить — основной способ вывода и т.п.)
-const IGNORED_DIAGNOSTICS = new Set(["DeprecatedMessage", "UnusedLocalMethod", "CodeOutOfRegion", "MissingCodeTryCatchEx"]);
+const IGNORED_DIAGNOSTICS = new Set(["DeprecatedMessage", "UnusedLocalMethod", "CodeOutOfRegion", "MissingCodeTryCatchEx", "MagicNumber"]);
 
 const listeners = new Set();
 let client = null;
@@ -160,11 +160,19 @@ const toRange = (r) => ({
   endLineNumber: r.end.line + 1, endColumn: r.end.character + 1,
 });
 const toPos = (p) => ({ line: p.lineNumber - 1, character: p.column - 1 });
+// BSL LS добавляет в подсказки ссылку «перейти к определению» вида file:///…/Module.bsl#1 —
+// это виртуальный документ редактора, а не файл, но ссылка бесполезна и смущает: оставляем только https.
+const safeMd = (s) =>
+  String(s ?? "")
+    .replace(/^\s*\[[^\]]*\]\((?!https:\/\/)[^)]*\)\s*$/gm, "")
+    .replace(/\[([^\]]*)\]\((?!https:\/\/)[^)]*\)/g, "$1")
+    .replace(/(\n---\s*){2,}/g, "\n---\n")
+    .trim();
 const md = (c) => {
   if (!c) return [];
-  if (typeof c === "string") return [{ value: c }];
+  if (typeof c === "string") return [{ value: safeMd(c) }];
   if (Array.isArray(c)) return c.flatMap(md);
-  if (c.kind) return [{ value: c.value }];
+  if (c.kind) return [{ value: safeMd(c.value) }];
   if (c.language) return [{ value: "```" + c.language + "\n" + c.value + "\n```" }];
   return [];
 };
@@ -190,7 +198,7 @@ function registerProviders(monaco) {
             label: it.label,
             kind: kinds[it.kind] ?? K.Text,
             detail: it.detail,
-            documentation: it.documentation ? (typeof it.documentation === "string" ? it.documentation : { value: it.documentation.value }) : undefined,
+            documentation: it.documentation ? (typeof it.documentation === "string" ? safeMd(it.documentation) : { value: safeMd(it.documentation.value) }) : undefined,
             insertText: it.textEdit?.newText ?? it.insertText ?? it.label,
             insertTextRules: it.insertTextFormat === 2 ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
             range: it.textEdit?.range ? toRange(it.textEdit.range) : range,
