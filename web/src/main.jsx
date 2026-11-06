@@ -15,7 +15,12 @@ function Layout({ children }) {
   return (
     <>
       <header className="top">
-        <Link to="/" className="logo"><span className="logo-mark">1С</span> bsl<b>speedrun</b></Link>
+        <Link to="/" className="logo" aria-label="bsl speedrun — на главную">
+          <picture>
+            <source srcSet="/logo-dark.svg" media="(prefers-color-scheme: dark)" />
+            <img src="/logo-light.svg" alt="bsl speedrun" width="160" height="32" />
+          </picture>
+        </Link>
         <nav>
           <NavLink to="/practice">Практика</NavLink>
           <NavLink to="/sandbox">Песочница</NavLink>
