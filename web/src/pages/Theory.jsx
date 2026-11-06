@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { quizTopics } from "../lib/content.js";
 import { progress } from "../lib/api.js";
 import Markdown from "../components/Markdown.jsx";
+import { plural, QUESTIONS } from "../lib/plural.js";
 
 function shuffle(a) {
   const r = [...a];
@@ -29,7 +30,7 @@ function TopicList({ onPick }) {
           const right = answered.filter((q) => stats[q.id]).length;
           return (
             <button key={t.id} className="card" onClick={() => onPick(t.id)}>
-              <b>{t.topic}</b><span>{t.questions.length} вопросов{answered.length ? ` · верно ${right}/${answered.length}` : ""}</span>
+              <b>{t.topic}</b><span>{plural(t.questions.length, QUESTIONS)}{answered.length ? ` · верно ${right}/${answered.length}` : ""}</span>
             </button>
           );
         })}
