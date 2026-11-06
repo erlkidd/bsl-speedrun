@@ -46,12 +46,14 @@ function exec(args, cwd) {
         ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
       },
     });
+    // OneScript на Windows пишет в OEM-кодировке консоли (cp866), на Linux — UTF-8
+    const dec = new TextDecoder(process.env.OSCRIPT_ENCODING || (process.platform === "win32" ? "ibm866" : "utf-8"));
     let out = "";
     let truncated = false;
     let timedOut = false;
     const onData = (chunk) => {
       if (out.length >= MAX_OUTPUT) { truncated = true; return; }
-      out += chunk.toString("utf8");
+      out += dec.decode(chunk, { stream: true });
       if (out.length > MAX_OUTPUT) { out = out.slice(0, MAX_OUTPUT); truncated = true; kill(); }
     };
     const kill = () => {
@@ -77,7 +79,7 @@ function exec(args, cwd) {
 /** Ошибки OneScript вида «{Модуль /tmp/x/main.os / Ошибка в строке: 3 / Текст}» → [{line, message}] */
 export function parseErrors(output) {
   const errs = [];
-  const re = /(?:Ошибка в строке|Error in line)\s*:?\s*(\d+)\s*(?:\/|:)?\s*([^\n}]*)/giu;
+  const re = /(?:Ошибка в строке|Error in line)\s*:?\s*(\d+)(?:,\s*\d+)?\s*(?:\/|:)?\s*([^\n}]*)/giu;
   let m;
   while ((m = re.exec(output))) errs.push({ line: Number(m[1]), message: m[2].trim() || "Ошибка" });
   return errs;
@@ -114,4 +116,7 @@ export async function runOneScript(source, { run = true } = {}) {
   });
 }
 
-const clean = (s, dir) => s.split(dir).join("").replace(/[\\/]main\.os/g, "Модуль");
+const clean = (s, dir) => cleanPaths(s, dir);
+const cleanPaths = (s, dir) =>
+  s.replace(/\{Модуль [^{}\n]*?main\.os\s*\/\s*/g, "{").replace(/\{Module [^{}\n]*?main\.os\s*\/\s*/g, "{");
+const _oldClean = (s, dir) => s.split(join(dir, "main.os")).join("").split(dir).join("").replace(/\{Модуль\s*\/\s*/g, "{");

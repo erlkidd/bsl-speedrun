@@ -1,6 +1,9 @@
 // Лёгкий LSP-клиент поверх WebSocket для BSL Language Server.
 // Диагностики → маркеры Monaco; автодополнение, hover, форматирование.
 
+// Правила BSL LS, которые в тренажёре только мешают (Сообщить — основной способ вывода и т.п.)
+const IGNORED_DIAGNOSTICS = new Set(["DeprecatedMessage", "UnusedLocalMethod", "CodeOutOfRegion", "MissingCodeTryCatchEx"]);
+
 const listeners = new Set();
 let client = null;
 
@@ -141,11 +144,12 @@ class LspClient {
     if (!d || d.model.isDisposed()) return;
     const S = this.monaco.MarkerSeverity;
     const sev = { 1: S.Error, 2: S.Warning, 3: S.Info, 4: S.Hint };
-    this.monaco.editor.setModelMarkers(d.model, "bsl-ls", diagnostics.map((x) => ({
+    const code = (x) => (typeof x.code === "object" ? x.code?.value : x.code);
+    this.monaco.editor.setModelMarkers(d.model, "bsl-ls", diagnostics.filter((x) => !IGNORED_DIAGNOSTICS.has(code(x))).map((x) => ({
       ...toRange(x.range),
       severity: sev[x.severity] ?? S.Info,
       message: x.message,
-      code: typeof x.code === "object" ? x.code?.value : x.code,
+      code: code(x),
       source: "BSL LS",
     })));
   }

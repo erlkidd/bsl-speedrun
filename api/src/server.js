@@ -9,7 +9,8 @@ const app = Fastify({ logger: { level: process.env.LOG_LEVEL || "info" }, bodyLi
 
 loadTasks();
 
-// простой rate limit по IP: 30 запусков в минуту
+// простой rate limit по IP: RATE_LIMIT запусков в минуту (по умолчанию 30)
+const RATE_LIMIT = Number(process.env.RATE_LIMIT || 30);
 const hits = new Map();
 app.addHook("onRequest", async (req, reply) => {
   if (req.method !== "POST") return;
@@ -18,7 +19,7 @@ app.addHook("onRequest", async (req, reply) => {
   const arr = (hits.get(ip) || []).filter((t) => now - t < 60_000);
   arr.push(now);
   hits.set(ip, arr);
-  if (arr.length > 30) return reply.code(429).send({ error: "Слишком много запусков, подожди минуту" });
+  if (arr.length > RATE_LIMIT) return reply.code(429).send({ error: "Слишком много запусков, подожди минуту" });
 });
 setInterval(() => { const now = Date.now(); for (const [k, v] of hits) if (v.every((t) => now - t > 60_000)) hits.delete(k); }, 60_000).unref();
 
