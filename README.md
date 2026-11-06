@@ -1,6 +1,22 @@
+<p align="center">
+  <img src="brand/logo-light.png" alt="bsl speedrun" width="320">
+</p>
+
 # bsl-speedrun.kz
 
 Тренажёр по языку 1С (BSL): практика с автопроверкой, песочница на OneScript, тесты по теории, база знаний по платформе и БСП.
+
+## Что внутри
+
+| Раздел | Что умеет |
+|---|---|
+| **Практика** | задачи с условием, подсказками и эталонным решением; проверка: запрещённые вызовы → синтаксис (`oscript -check`) → правила задачи → тесты |
+| **Песочница** | любой BSL-код на OneScript: коллекции, строки, даты, `Сообщить()`; без файлов, сети и системных команд, лимит 5 с |
+| **Теория** | тесты по темам; при неверном ответе — правильный и объяснение |
+| **База знаний** | статьи по платформе и языку, отдельный раздел по БСП |
+| **Редактор** | Monaco + BSL Language Server: ошибки и замечания линтера, автодополнение, подсказки по методам, форматирование |
+
+**Стек:** React + Vite + Monaco · Node.js (Fastify) · OneScript 2.2 · BSL Language Server 1.0.7 · Caddy · Docker Compose.
 
 ## Запуск (везде одинаково — Docker)
 
@@ -35,6 +51,27 @@ docker compose up -d --build
 5. Обновление: `git pull && docker compose up -d --build`.
 
 ## Разработка без Docker
+
+### Windows (PowerShell)
+
+1. Скачать в папку `tools\` (она в `.gitignore`):
+   - [OneScript-2.2.0-win-x64.zip](https://github.com/EvilBeaver/OneScript/releases/tag/v2.2.0) → распаковать в `tools\onescript`;
+   - [bsl-language-server_win.zip](https://github.com/1c-syntax/bsl-language-server/releases/tag/v1.0.7) → распаковать в `tools\bsl-ls` (Java внутри, ставить не нужно).
+2. Три окна терминала:
+   ```powershell
+   # 1. API
+   cd api; npm.cmd ci
+   $env:OSCRIPT_BIN = "$PWD\..\tools\onescript\bin\oscript.exe"; $env:PORT = "8787"; node src/server.js
+
+   # 2. BSL LS
+   tools\bsl-ls\bsl-language-server\bsl-language-server.exe websocket --server.port=8025
+
+   # 3. Сайт
+   cd web; npm.cmd ci; npm.cmd run dev
+   ```
+3. Открыть http://127.0.0.1:5173.
+
+### Linux / macOS
 
 ```bash
 cd api && npm install && OSCRIPT_BIN=путь/к/oscript PORT=8787 npm start
