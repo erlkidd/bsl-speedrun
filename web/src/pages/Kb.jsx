@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { progress } from "../lib/store.js";
 import { Link, useParams } from "react-router-dom";
 import { kbArticles, kbSections, getArticle } from "../lib/content.js";
 import Markdown from "../components/Markdown.jsx";
@@ -30,6 +31,7 @@ export function Kb() {
 export function KbArticle() {
   const { section, slug } = useParams();
   const a = getArticle(section, slug);
+  useEffect(() => { if (a) progress.readKb(`${section}/${slug}`); }, [a, section, slug]);
   if (!a) return <div className="page"><h1>Статья не найдена</h1><Link to="/kb">К базе знаний</Link></div>;
   const siblings = kbArticles.filter((x) => x.section === section);
   const sec = kbSections.find((s) => s.id === section);

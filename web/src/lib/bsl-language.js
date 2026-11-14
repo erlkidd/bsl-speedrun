@@ -75,4 +75,4 @@ export function registerBsl(monaco) {
   monaco.editor.defineTheme("bsl-light", { base: "vs", inherit: true, rules: rules(false), colors: { "editor.background": "#fbfaf7" } });
 }
 
-export const prefersDark = () => window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+export const prefersDark = () => document.documentElement.dataset.theme === "dark";

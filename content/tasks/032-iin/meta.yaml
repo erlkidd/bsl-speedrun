@@ -1,0 +1,28 @@
+title: Проверка ИИН/БИН по формату
+difficulty: 1
+tags:
+- строки
+- условия
+hints:
+- '`СокрЛП()` убирает пробелы по краям, `СтрДлина()` — длина строки.'
+- Символ — цифра, если `СтрНайти("0123456789", Символ) > 0`.
+function: ПохожеНаИИН
+cases:
+- args:
+  - '600400111222'
+  expected: true
+- args:
+  - ' 600400111222 '
+  expected: true
+- args:
+  - '60040011122'
+  expected: false
+- args:
+  - 60040011122A
+  expected: false
+- args:
+  - ''
+  expected: false
+- args:
+  - 6004 0011122
+  expected: false

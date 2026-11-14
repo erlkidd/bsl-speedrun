@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import monaco from "../lib/monaco.js";
 import { prefersDark } from "../lib/bsl-language.js";
 import { attachLsp, onLspStatus } from "../lib/lsp.js";
+import { onTheme } from "../lib/theme.js";
 
 let seq = 0;
 
@@ -43,9 +44,7 @@ export default function CodeEditor({ value, onChange, errors = [], onRun, apiRef
       editor.getAction("editor.action.formatDocument")?.run(),
     );
     const detach = attachLsp(monaco, model);
-    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-    const onScheme = () => monaco.editor.setTheme(mq.matches ? "bsl-dark" : "bsl-light");
-    mq?.addEventListener?.("change", onScheme);
+    const offTheme = onTheme(() => monaco.editor.setTheme(prefersDark() ? "bsl-dark" : "bsl-light"));
     if (apiRef) {
       apiRef.current = {
         format: () => editor.getAction("editor.action.formatDocument")?.run(),
@@ -54,7 +53,7 @@ export default function CodeEditor({ value, onChange, errors = [], onRun, apiRef
       };
     }
     return () => {
-      mq?.removeEventListener?.("change", onScheme);
+      offTheme();
       detach();
       sub.dispose();
       editor.dispose();

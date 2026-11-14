@@ -3,6 +3,7 @@ import { existsSync, unlinkSync, chmodSync } from "node:fs";
 import { runOneScript, BusyError } from "./runner.js";
 import { checkForbidden, checkTaskRules } from "./guard.js";
 import { loadTasks, getTask, buildHarness, parseCases, compareOutput } from "./tasks.js";
+import { registerAuth } from "./auth.js";
 
 const MAX_CODE = 20_000;
 const app = Fastify({ logger: { level: process.env.LOG_LEVEL || "info" }, bodyLimit: 64 * 1024, trustProxy: true });
@@ -13,7 +14,7 @@ loadTasks();
 const RATE_LIMIT = Number(process.env.RATE_LIMIT || 30);
 const hits = new Map();
 app.addHook("onRequest", async (req, reply) => {
-  if (req.method !== "POST") return;
+  if (req.method !== "POST" || req.url.startsWith("/api/auth/")) return; // у /api/auth свой лимит
   const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.ip || "local";
   const now = Date.now();
   const arr = (hits.get(ip) || []).filter((t) => now - t < 60_000);
@@ -28,6 +29,8 @@ const validate = (code) => {
   if (code.length > MAX_CODE) return `Код длиннее ${MAX_CODE} символов`;
   return null;
 };
+
+registerAuth(app);
 
 app.get("/api/health", async () => ({ ok: true, tasks: loadTasks().size }));
 
