@@ -33,8 +33,11 @@ services:
       - /tmp:size=64m,mode=1777
     volumes:
       - apisock:/sock
+      - apidata:/data          # профили и прогресс (users.json)
     environment:
       SOCKET_PATH: /sock/api.sock
+      DATA_DIR: /data
+      ALLOW_OPEN_RESET: ${ALLOW_OPEN_RESET:-1}
       RUN_TIMEOUT_MS: "5000"
       MAX_PARALLEL: "2"
     mem_limit: 512m
@@ -57,5 +60,6 @@ services:
 
 volumes:
   apisock:
+  apidata:
   caddy_data:
   caddy_config:

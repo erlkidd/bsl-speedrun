@@ -32,6 +32,6 @@ COPY api/runtime ./runtime
 COPY content /app/content
 
 # каталог сокета принадлежит node — именованный том унаследует права
-RUN mkdir -p /sock && chown node:node /sock
+RUN mkdir -p /sock /data && chown node:node /sock /data
 USER node
 CMD ["node", "src/server.js"]

@@ -5,6 +5,7 @@ const raw = (g) => g; // для читаемости
 const taskFiles = raw(import.meta.glob("../../../content/tasks/*/*.{yaml,md,os}", { query: "?raw", import: "default", eager: true }));
 const quizFiles = raw(import.meta.glob("../../../content/quiz/*.yaml", { query: "?raw", import: "default", eager: true }));
 const kbFiles = raw(import.meta.glob("../../../content/kb/*/*.md", { query: "?raw", import: "default", eager: true }));
+const queryFiles = raw(import.meta.glob("../../../content/queries/*.yaml", { query: "?raw", import: "default", eager: true }));
 const sandboxFiles = raw(import.meta.glob("../../../content/sandbox/*.os", { query: "?raw", import: "default", eager: true }));
 
 // ---------- задачи ----------
@@ -42,6 +43,7 @@ function frontmatter(text) {
   return { meta: yaml.load(m[1]) ?? {}, body: text.slice(m[0].length) };
 }
 export const kbSections = [
+  { id: "queries", title: "Язык запросов и регистры" },
   { id: "general", title: "Платформа и язык" },
   { id: "bsp", title: "БСП" },
 ];
@@ -62,3 +64,14 @@ export const sandboxExamples = Object.entries(sandboxFiles)
     const title = code.match(/^\/\/\s*(.+)/)?.[1] ?? file;
     return { id: file, title, code };
   });
+
+// ---------- задачи на запросы ----------
+export const queryTopics = Object.entries(queryFiles)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([path, text]) => {
+    const data = yaml.load(text);
+    const file = path.split("/").pop().replace(/\.yaml$/, "");
+    return { id: file, topic: data.topic, kb: data.kb, tasks: data.tasks.map((t) => ({ type: "write", ...t, topic: data.topic, topicId: file })) };
+  });
+export const queryTasks = queryTopics.flatMap((t) => t.tasks);
+export const getQueryTask = (id) => queryTasks.find((t) => t.id === id);

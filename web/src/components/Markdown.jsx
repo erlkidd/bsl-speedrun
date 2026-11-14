@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Marked } from "marked";
+import { highlightQuery } from "../lib/q1c/highlight.js";
 
 const KW = /^(Если|Тогда|ИначеЕсли|Иначе|КонецЕсли|Для|Каждого|Из|По|Цикл|КонецЦикла|Пока|Прервать|Продолжить|Процедура|КонецПроцедуры|Функция|КонецФункции|Возврат|Перем|Экспорт|Знач|Попытка|Исключение|КонецПопытки|ВызватьИсключение|Новый|И|ИЛИ|НЕ|Истина|Ложь|Неопределено|ВЫБРАТЬ|ИЗ|ГДЕ|КАК|СГРУППИРОВАТЬ|УПОРЯДОЧИТЬ|ЛЕВОЕ|ВНУТРЕННЕЕ|СОЕДИНЕНИЕ|ПО|ПОМЕСТИТЬ|ИМЕЮЩИЕ|РАЗРЕШЕННЫЕ|ПЕРВЫЕ|РАЗЛИЧНЫЕ)$/i;
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -26,7 +27,7 @@ const marked = new Marked({
   renderer: {
     code({ text, lang }) {
       const l = (lang || "").toLowerCase();
-      const body = ["bsl", "1c", "1с", "os", ""].includes(l) ? highlightBsl(text) : esc(text);
+      const body = l === "query" ? highlightQuery(text) : ["bsl", "1c", "1с", "os", ""].includes(l) ? highlightBsl(text) : esc(text);
       return `<pre class="code"><code>${body}</code></pre>`;
     },
   },
