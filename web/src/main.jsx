@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, lazy } from "react";
+import { StrictMode, Suspense, lazy, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, NavLink, Link, useLocation } from "react-router-dom";
 import { useTheme, toggleTheme } from "./lib/theme.js";
@@ -29,6 +29,39 @@ function ThemeToggle() {
   );
 }
 
+/** Подвал всплывает, когда страница долистана до конца (или не прокручивается вовсе). */
+function Footer() {
+  const [shown, setShown] = useState(false);
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const check = () => setShown(window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 28);
+    check();
+    const t = setTimeout(check, 400); // после отрисовки новой страницы
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    const ro = new ResizeObserver(check); ro.observe(document.body);
+    return () => { clearTimeout(t); window.removeEventListener("scroll", check); window.removeEventListener("resize", check); ro.disconnect(); };
+  }, [pathname]);
+  // плеер и помощник приподнимаются над всплывшим подвалом
+  useEffect(() => { document.documentElement.classList.toggle("foot-open", shown); }, [shown]);
+  return (
+    <footer className={`foot ${shown ? "show" : ""}`} aria-hidden={!shown}>
+      <div className="bsl-band" aria-label="Что такое BSL — наша версия">
+        <BarsikSkater size={62} />
+        <div>
+          <p className="bsl-kicker">BSL — это</p>
+          <p className="bsl-title" aria-label="Barsik Spreads Language 1C"><span><b>B</b>arsik</span> <span><b>S</b>preads</span> <span><b>L</b>anguage</span> <span><b>1C</b></span></p>
+        </div>
+      </div>
+      <div className="foot-info">
+        <p>Автор — <b>Arthur Barmine</b></p>
+        <p>bsl-speedrun.kz · <a href="https://github.com/erlkidd/bsl-speedrun" target="_blank" rel="noreferrer">исходники на GitHub</a></p>
+        <p>код выполняет <a href="https://oscript.io" target="_blank" rel="noreferrer">OneScript</a>, линтер — <a href="https://1c-syntax.github.io/bsl-language-server/" target="_blank" rel="noreferrer">BSL Language Server</a> · радио: laut.fm, SomaFM</p>
+      </div>
+    </footer>
+  );
+}
+
 function Layout({ children }) {
   const theme = useTheme();
   const home = useLocation().pathname === "/";
@@ -50,20 +83,7 @@ function Layout({ children }) {
         <span className="top-right"><ThemeToggle /><ProfileChip /></span>
       </header>
       <main className={home ? "is-home" : ""}>{children}</main>
-      <footer className="foot">
-        <div className="bsl-band" aria-label="Что такое BSL — наша версия">
-          <BarsikSkater size={104} />
-          <div>
-            <p className="bsl-kicker">BSL — это</p>
-            <p className="bsl-title" aria-label="Barsik Spreads Language 1C"><span><b>B</b>arsik</span> <span><b>S</b>preads</span> <span><b>L</b>anguage</span> <span><b>1C</b></span></p>
-          </div>
-        </div>
-        <div className="foot-info">
-          <p>Автор — <b>Arthur Barmine</b></p>
-          <p>bsl-speedrun.kz · <a href="https://github.com/erlkidd/bsl-speedrun" target="_blank" rel="noreferrer">исходники на GitHub</a></p>
-          <p>код выполняет <a href="https://oscript.io" target="_blank" rel="noreferrer">OneScript</a>, линтер — <a href="https://1c-syntax.github.io/bsl-language-server/" target="_blank" rel="noreferrer">BSL Language Server</a> · радио: laut.fm, SomaFM</p>
-        </div>
-      </footer>
+      <Footer />
       <RadioPlayer pinned={home} />
       <Helper />
       <Toasts />

@@ -18,7 +18,9 @@ export default function RadioPlayer({ pinned = true }) {
   const [failed, setFailed] = useState(false);
   const [station, setStation] = useState(0);
   const [volume, setVolume] = useState(() => { try { const v = parseFloat(localStorage.getItem(KEY)); return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.4; } catch { return 0.4; } });
-  const [open, setOpen] = useState(false); // для касаний: открыть по нажатию на «ноту»
+  const [open, setOpen] = useState(false); // вне главной плеер открывается и закрывается нажатием на «ноту»
+  const lastVolume = useRef(0.4);
+  const toggleMute = () => { if (volume > 0) { lastVolume.current = volume; setVolume(0); } else setVolume(lastVolume.current || 0.4); };
   const wanted = useRef(false);
   const cur = useRef(0);
 
@@ -56,9 +58,9 @@ export default function RadioPlayer({ pinned = true }) {
 
   const active = playing || loading;
   return (
-    // на главной плеер виден всегда; на остальных страницах прячется и выезжает при наведении на левый нижний угол
-    <div className={`radio-zone ${pinned ? "pinned" : ""} ${open ? "open" : ""}`} onMouseLeave={() => setOpen(false)}>
-      {!pinned && <button className={`radio-peek ${active ? "on" : ""}`} onClick={() => setOpen((o) => !o)} aria-label="Показать плеер радио" aria-expanded={open} title="Радио lo-fi">♪</button>}
+    // на главной плеер виден всегда; на остальных страницах он открывается и закрывается нажатием на значок с нотой
+    <div className={`radio-zone ${pinned ? "pinned" : ""} ${open ? "open" : ""}`}>
+      {!pinned && <button className={`radio-peek ${active ? "on" : ""}`} onClick={() => setOpen((o) => !o)} aria-label={open ? "Скрыть плеер радио" : "Показать плеер радио"} aria-expanded={open} title="Радио lo-fi">♪</button>}
       <div className={`radio ${playing ? "on" : ""}`} role="group" aria-label="Радио lo-fi">
         <button className="radio-btn" onClick={toggle} aria-label={active ? "Пауза" : "Включить радио"} title={active ? "Пауза" : "Включить lo-fi радио"}>
           {active ? <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg> : <svg viewBox="0 0 24 24" width="18" height="18"><path d="M7 4l13 8-13 8z" /></svg>}
@@ -67,11 +69,13 @@ export default function RadioPlayer({ pinned = true }) {
           <b>lo-fi радио {playing && <span className="eq" aria-hidden="true"><i /><i /><i /></span>}</b>
           <small aria-live="polite">{failed ? "станции недоступны, попробуй позже" : loading ? "подключаюсь…" : playing ? STATIONS[station].name : "музыка для фокуса"}</small>
         </div>
-        <label className="radio-volume" title={`Громкость ${Math.round(volume * 100)}%`}>
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" />{volume > 0.02 && <path d="M15 9.5a3.5 3.5 0 0 1 0 5" fill="none" strokeWidth="2" strokeLinecap="round" />}{volume > 0.5 && <path d="M17.5 7a7 7 0 0 1 0 10" fill="none" strokeWidth="2" strokeLinecap="round" />}</svg>
-          <input className="radio-vol" type="range" min="0" max="1" step="0.02" value={volume} style={{ "--v": `${volume * 100}%` }} onChange={(e) => setVolume(+e.target.value)} aria-label="Громкость" />
+        <div className="radio-volume">
+          <button className="radio-mute" onClick={toggleMute} aria-pressed={volume === 0} aria-label={volume === 0 ? "Включить звук" : "Выключить звук"} title={volume === 0 ? "Включить звук" : "Выключить звук"}>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" />{volume === 0 && <path d="M16 9l5 6M21 9l-5 6" fill="none" strokeWidth="2" strokeLinecap="round" />}{volume > 0 && <path d="M15 9.5a3.5 3.5 0 0 1 0 5" fill="none" strokeWidth="2" strokeLinecap="round" />}{volume > 0.5 && <path d="M17.5 7a7 7 0 0 1 0 10" fill="none" strokeWidth="2" strokeLinecap="round" />}</svg>
+          </button>
+          <input className="radio-vol" type="range" min="0" max="1" step="0.02" value={volume} style={{ "--v": `${volume * 100}%` }} onChange={(e) => setVolume(+e.target.value)} aria-label="Громкость" title={`Громкость ${Math.round(volume * 100)}%`} />
           <output>{Math.round(volume * 100)}</output>
-        </label>
+        </div>
       </div>
     </div>
   );
